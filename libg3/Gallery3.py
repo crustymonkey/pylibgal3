@@ -1,9 +1,8 @@
 
 __all__ = ['Gallery3']
 
-from Errors import G3Error
 from Requests import *
-from Response import *
+from G3Items import getItemFromResp
 from urllib import quote
 import urllib2 , os
 
@@ -35,13 +34,25 @@ class Gallery3(object):
         self._buildOpener()
 
     def getRoot(self):
-        url = self._buildUrl(self._rootUri)
+        """
+        Returns the root item (album)
+        """
+        resp = self._getRespFromUri(self._rootUri)
+        return getItemFromResp(resp)
+
+    def _getRespFromUri(self , uri):
+        """
+        Performs the request for the given uri and returns the "addinfourl" 
+        response
+        """
+        url = self._buildUrl(uri)
         req = GetRequest(url , self.apiKey)
         resp = self._opener.open(req)
         return resp
 
     def _buildOpener(self):
-        self._opener = urllib2.build_opener()
+        cp = urllib2.HTTPCookieProcessor()
+        self._opener = urllib2.build_opener(cp)
         if self.ssl:
             self._opener.add_handler(urllib2.HTTPSHandler())
 
