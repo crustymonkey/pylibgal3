@@ -2,21 +2,60 @@
 __all__ = ['Album' , 'Image' , 'LocalImage' , 'RemoteImage' , 'LocalMovie' , 
     'RemoteMovie' , 'getItemFromResp']
 
+from datetime import datetime
 import json , weakref
 
 class BaseRemote(object):
-    def __init__(self , respObj , galObj):
-        for k , v in respObj.items():
-            self.__dict__[k] = v
-        self._gal = galObj
+    _gal = None
 
-    def __getattr__(self , name):
-        if name in self.entity:
-            return self.entity[name]
+    def __init__(self , respObj , weakGalObj):
+        for k , v in respObj.items():
+            setattr(self , k , v)
+        self._gal = weakGalObj()
+        self._membersSet = False
+
+    def __getattribute__(self , name):
+        if name == 'members' and not \
+                object.__getattribute__(self , '_membersSet'):
+            setattr(self , 'members' ,  
+                object.__getattribute__(self , '_getMemberObjects')())
+            setattr(self , '_membersSet' , True)
+        d = object.__getattribute__(self , '__dict__')
+        if name in d:
+            return d[name]
+        elif 'entity' in d and name in d['entity']:
+            return d['entity'][name]
         raise AttributeError(name)
 
-    def getMemberObjects(self):
+    def _getMemberObjects(self):
+        """
+        This returns the appropriate objects for each child of this object.
+        The default "members" attribute only contains the URLs for the 
+        children of this object.  This returns a list of the actual objects.
+        """
+        memObjs = []
+        members = object.__getattribute__(self , 'members')
+        gal = object.__getattribute__(self , '_gal')
+        for m in members:
+            resp = gal.getRespFromUrl(m)
+            memObjs.append(getItemFromResp(resp , gal))
+        return memObjs
 
+    def getCrDT(self):
+        """
+        Returns a datetime object for the time this item was created
+        """
+        if hasattr(self , 'created'):
+            return datetime.fromtimestamp(int(self.created))
+        return None
+
+    def getUpdDT(self):
+        """
+        Returns a datetime object for the time this item was last updated
+        """
+        if hasattr(self , 'updated'):
+            return datetime.fromtimestamp(int(self.updated))
+        return None
 
 class Album(BaseRemote):
     pass

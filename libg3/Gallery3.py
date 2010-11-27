@@ -29,6 +29,7 @@ class Gallery3(object):
         self.ssl = ssl
         self.g3Base = g3Base.strip('/')
         self.protocol = ('http' , 'https')[ssl]
+        self.root = None
         self._rootUri = 'index.php/rest/item/1'
         self._opener = None
         self._buildOpener()
@@ -37,18 +38,31 @@ class Gallery3(object):
         """
         Returns the root item (album)
         """
-        resp = self._getRespFromUri(self._rootUri)
-        return getItemFromResp(resp)
+        if self.root is None:
+            resp = self.getRespFromUri(self._rootUri)
+            self.root = getItemFromResp(resp , self)
+        return self.root
 
-    def _getRespFromUri(self , uri):
+    def getRespFromUrl(self , url):
         """
-        Performs the request for the given uri and returns the "addinfourl" 
-        response
+        This returns the response object given a full url rather than just a
+        uri defining the location on the server
+
+        url(str) : The url to the resource
         """
-        url = self._buildUrl(uri)
         req = GetRequest(url , self.apiKey)
         resp = self._opener.open(req)
         return resp
+
+    def getRespFromUri(self , uri):
+        """
+        Performs the request for the given uri and returns the "addinfourl" 
+        response
+
+        uri(str) : The uri string defining the resource on the defined host
+        """
+        url = self._buildUrl(uri)
+        return self.getRespFromUrl(url)
 
     def _buildOpener(self):
         cp = urllib2.HTTPCookieProcessor()
