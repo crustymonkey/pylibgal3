@@ -4,7 +4,7 @@ __all__ = ['Gallery3']
 from Requests import *
 from G3Items import getItemFromResp
 from urllib import quote
-import urllib2 , os
+import urllib2 , os , json
 
 class Gallery3(object):
     """
@@ -64,6 +64,31 @@ class Gallery3(object):
         url = self._buildUrl(uri)
         return self.getRespFromUrl(url)
 
+    def addAlbum(self , parent , albumName , title):
+        """
+        Adds an album to the given parent album
+
+        parent(Album)       : The parent Album object
+        albumName(str)      : The name of the album
+        title(str)          : The album title
+        """
+        data = {
+            'type': 'album' ,
+            'name': albumName ,
+            'title': title
+        }
+        req = PostRequest(parent.url , self.apiKey , data)
+        resp = self._opener.open(req)
+        newObjUrl = self._getUrlFromResp(resp)
+        item = getItemFromResp(self.getRespFromUrl(newObjUrl) , self , parent)
+        parent._members.append(newObjUrl)
+        parent.members.append(item)
+        return item
+
+    def addImage(self , parent , image , name='' , title='' , description=''):
+        # TODO: implement this
+        pass
+
     def _buildOpener(self):
         cp = urllib2.HTTPCookieProcessor()
         self._opener = urllib2.build_opener(cp)
@@ -74,3 +99,7 @@ class Gallery3(object):
         url = '%s://%s:%d/%s/%s' % (self.protocol , self.host , self.port , 
             quote(self.g3Base) , quote(resource))
         return url
+
+    def _getUrlFromResp(self , resp):
+        d = json.loads(resp.read())
+        return d['url']
