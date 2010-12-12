@@ -3,7 +3,7 @@ __all__ = ['Album' , 'Image' , 'LocalImage' , 'RemoteImage' , 'LocalMovie' ,
     'RemoteMovie' , 'getItemFromResp']
 
 from datetime import datetime
-import json , weakref , types
+import json , weakref , types , os , mimetypes
 
 class BaseRemote(object):
     _gal = None
@@ -75,23 +75,27 @@ class BaseRemote(object):
         return None
 
 class Album(BaseRemote):
-    def addImage(self , image , name='' , title='' , description=''):
+    def addImage(self , image , title='' , description='' , name=''):
         """
         Add a LocalImage object to the album
 
-        image(LocalImage)   : The image to upload
+        image(LocalImage)       : The image to upload
+
+        returns(RemoteImage)    : The RemoteImage object that was created
         """
         if not isinstance(image , LocalImage):
             raise TypeError('%r is not of type LocalImage' % image)
-        return self._gal.addImage(self , image , name , title , description)
+        return self._gal.addImage(self , image , title , description , name)
 
     def addMovie(self , movie , name='' , title='' , description=''):
         """
         Adds a LocalMovie object to the album
         
-        movie(LocalMovie)   : The movie to upload
+        movie(LocalMovie)       : The movie to upload
+
+        returns(RemoteMovie)    : The RemoteMovie object that was created
         """
-        return self.addImage(movie , name , title , description)
+        return self._gal.addMovie(self , movie , title , description , name)
 
     def addAlbum(self , albumName , title):
         """
@@ -99,20 +103,109 @@ class Album(BaseRemote):
 
         albumName(str)  : The name of the new album
         title(str)      : The album title
+
+        returns(Album)  : The Album object that was created
         """
         return self._gal.addAlbum(self , albumName , title)
 
+    def getAlbums(self):
+        """
+        Return a list of the sub-albums in this album
+
+        returns(list[Album])  : A list of Album objects
+        """
+        return self._getByType('album')
+    Albums = property(getAlbums)
+
+    def getImages(self):
+        """
+        Return a list of the images in this album
+
+        returns(list[RemoteImage])  : A list of RemoteImages
+        """
+        return self._getByType('photo')
+    Images = property(getImages)
+
+    def getMovies(self):
+        """
+        Return a list of the movies in this album
+
+        returns(list[RemoteMovie])  : A list of RemoteMovie objects
+        """
+        return self._getByType('movie')
+    Movies = property(getMovies)
+
+    def _getByType(self , t):
+        ret = []
+        for m in self.members:
+            if m.type == t:
+                ret.append(m)
+        return ret
+
 class Image(object):
-    pass
+    contentType = ''
 
 class LocalImage(Image):
-    pass
+    def __init__(self , path , replaceSpaces=True):
+        if not os.path.isfile(path):
+            raise IOError('%s is not a file' % path)
+        self.path = path
+        self.replaceSpaces = replaceSpaces
+        self.Filename = os.path.basename(self.path)
+        self.fh = None
+        self.type = 'photo'
+
+    def setContentType(self , ctype=None):
+        if ctype is not None:
+            self.contentType = ctype
+        self.contentType = mimetypes.guess_type(self.getFileContents())[0] or \
+            'application/octet-stream'
+    def getContentType(self):
+        if not self.contentType:
+            self.setContentType()
+        return self.contentType
+    ContentType = property(getContentType , setContentType)
+
+    def setFilename(self , name):
+        self.filename = name
+        if self.replaceSpaces:
+            self.filename = self.filename.replace(' ' , '_')
+    def getFilename(self):
+        return self.filename
+    Filename = property(getFilename , setFilename)
+
+    def getFileContents(self):
+        if self.fh is None:
+            self.fh = open(self.path , 'rb')
+        self.fh.seek(0)
+        return self.fh.read()
+
+    def getUploadContent(self):
+        """
+        This will return a string containing the MIME headers and the actual
+        binary content to be uploaded
+        """
+        ret = 'Content-Disposition: form-data; name="file"; '
+        ret += 'filename="%s"\r\n' % self.filename
+        ret += 'Content-Type: %s\r\n' % self.ContentType
+        ret += 'Content-Transfer-Encoding: binary\r\n'
+        ret += '\r\n'
+        ret += self.getFileContents() + '\r\n'
+        return ret
+
+    def close(self):
+        try:
+            self.fh.close()
+        except:
+            pass
 
 class RemoteImage(BaseRemote , Image):
     pass
 
 class LocalMovie(LocalImage):
-    pass
+    def __init__(self , path , replaceSpaces=True):
+        LocalImage.__init__(self , path , replaceSpaces)
+        self.type = 'movie'
 
 class RemoteMovie(RemoteImage):
     pass

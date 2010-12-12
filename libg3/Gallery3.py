@@ -2,8 +2,10 @@
 __all__ = ['Gallery3']
 
 from Requests import *
+from Errors import G3RequestError
 from G3Items import getItemFromResp
 from urllib import quote
+from uuid import uuid4
 import urllib2 , os , json
 
 class Gallery3(object):
@@ -51,7 +53,7 @@ class Gallery3(object):
         url(str) : The url to the resource
         """
         req = GetRequest(url , self.apiKey)
-        resp = self._opener.open(req)
+        resp = self._openReq(req)
         return resp
 
     def getRespFromUri(self , uri):
@@ -71,6 +73,8 @@ class Gallery3(object):
         parent(Album)       : The parent Album object
         albumName(str)      : The name of the album
         title(str)          : The album title
+
+        returns(Album)      : The Album object that was created
         """
         data = {
             'type': 'album' ,
@@ -78,16 +82,66 @@ class Gallery3(object):
             'title': title
         }
         req = PostRequest(parent.url , self.apiKey , data)
-        resp = self._opener.open(req)
+        resp = self._openReq(req)
         newObjUrl = self._getUrlFromResp(resp)
         item = getItemFromResp(self.getRespFromUrl(newObjUrl) , self , parent)
         parent._members.append(newObjUrl)
         parent.members.append(item)
         return item
 
-    def addImage(self , parent , image , name='' , title='' , description=''):
-        # TODO: implement this
-        pass
+    def addImage(self , parent , image , title='' , description='' , name=''):
+        """
+        Add a LocalImage to the parent album.
+
+        parent(Album)       : The parent album to add the image to
+        image(LocalImage)   : The local image to upload and add to the parent
+        title(str)          : The image title
+        description(str)    : The image description
+        name(str)           : The image file name
+        """
+        if name:
+            image.Filename = name
+        entity = {
+            'name': image.filename ,
+            'type': image.type ,
+            'title': title ,
+            'description': description ,
+        }
+        boundary = str(uuid4())
+        headers = {'Content-Type': 'multipart/form-data; boundary=%s' % 
+            boundary}
+        # this is more complicated than adding an album.  We have to
+        # construct the upload MIME headers, including build the string
+        # data section
+        data = '--%s\r\n' % boundary
+        data += 'Content-Disposition: form-data; name="entity"\r\n'
+        data += 'Content-Type: text/plain; ' \
+            'charset=UTF-8\r\n'
+        data += 'Content-Transfer-Encoding: 8bit\r\n'
+        data += '\r\n'
+        data += '%s\r\n' % json.dumps(entity , separators=(',' , ':'))
+        data += '--%s\r\n' % boundary
+        data += image.getUploadContent()
+        data += '--%s--\r\n' % boundary
+        req = PostRequest(parent.url , self.apiKey , data , headers)
+        resp = self._openReq(req)
+        newObjUrl = self._getUrlFromResp(resp)
+        item = getItemFromResp(self.getRespFromUrl(newObjUrl) , self , parent)
+        parent._members.append(newObjUrl)
+        parent.members.append(item)
+        return item
+
+    def addMovie(self , parent , movie , title='' , description='' , name=''):
+        """
+        Add a LocalMovie to the parent album.
+
+        parent(Album)       : The parent album to add the movie to
+        image(LocalMovie)   : The local movie to upload and add to the parent
+        title(str)          : The movie title
+        description(str)    : The movie description
+        name(str)           : The movie file name
+        """
+        return self.addImage(parent , movie , title , description , name)
 
     def _buildOpener(self):
         cp = urllib2.HTTPCookieProcessor()
@@ -103,3 +157,11 @@ class Gallery3(object):
     def _getUrlFromResp(self , resp):
         d = json.loads(resp.read())
         return d['url']
+
+    def _openReq(self , req):
+        try:
+            resp = self._opener.open(req)
+        except urllib2.HTTPError , e:
+            errors = json.loads(e.read())['errors']
+            raise G3RequestError(errors)
+        return resp
