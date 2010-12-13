@@ -9,7 +9,8 @@ import os , json , types
 class BaseRequest(Request):
     def __init__(self , url , apiKey , data=None , headers={} , 
             origin_req_host=None , unverifiable=False):
-        headers['X-Gallery-Request-Key'] = apiKey
+        if apiKey is not None:
+            headers['X-Gallery-Request-Key'] = apiKey
         if data is not None:
             if isinstance(data , dict):
                 data = 'entity=%s' % quote(json.dumps(data , 

@@ -74,6 +74,31 @@ class BaseRemote(object):
             return datetime.fromtimestamp(int(self.updated))
         return None
 
+    def delete(self):
+        """
+        Deletes this
+
+        returns(tuple(status , msg))    : Returns a tuple of a boolean status
+                                          and a message if there is an error
+        """
+        return self._gal.deleteItem(self)
+
+    def update(self , title=None , description=None):
+        """
+        Update either the title, the description or both
+        
+        title(str)                      : The new item title
+        description(str)                : The new item description
+
+        returns(tuple(status , msg))    : Returns a tuple of a boolean status
+                                          and a message if there is an error
+        """
+        if title is not None:
+            self.title = title
+        if description is not None:
+            self.description = description
+        return self._gal.updateItem(self)
+
 class Album(BaseRemote):
     def addImage(self , image , title='' , description='' , name=''):
         """

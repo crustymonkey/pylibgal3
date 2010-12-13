@@ -1,6 +1,6 @@
 
-__all__ = ['G3Error' , 'G3InvalidRespError' , 'G3UnknownTypeError' , 
-    'G3AuthError' , 'G3UnknownError']
+__all__ = ['G3Error' , 'G3RequestError' , 'G3InvalidRespError' , 
+    'G3UnknownTypeError' , 'G3AuthError' , 'G3UnknownError']
 
 class G3Error(Exception):
     pass
