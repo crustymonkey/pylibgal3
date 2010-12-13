@@ -8,7 +8,7 @@ class G3Error(Exception):
 class G3RequestError(G3Error):
     def __init__(self , errDict):
         self.errors = errDict
-        self.message = self._getMessage()
+        self._message = self._getMessage()
 
     def _getMessage(self):
         ret = ''
@@ -17,7 +17,7 @@ class G3RequestError(G3Error):
         return ret
 
     def __str__(self):
-        return self.message
+        return self._message
 
 class G3InvalidRespError(G3Error):
     pass
