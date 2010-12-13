@@ -165,9 +165,9 @@ class Gallery3(object):
         """
         try:
             self._isItemValid(album , Album)
-            self._isItemValid(album , RemoteImage)
+            self._isItemValid(image , RemoteImage)
         except Exception , e:
-            return (False , e.message)
+            return (False , str(e))
         data = {
             'album_cover': image.url ,
         }
@@ -175,7 +175,9 @@ class Gallery3(object):
         try:
             resp = self._openReq(req)
         except G3RequestError , e:
-            return (False , e.message)
+            return (False , str(e))
+        album.album_cover = image
+        album._album_cover = image.url
         return (True , '')
 
     def updateItem(self , item):
@@ -190,7 +192,7 @@ class Gallery3(object):
         try:
             self._isItemValid(item , BaseRemote)
         except Exception , e:
-            return (False , e.message)
+            return (False , str(e))
         data = {
             'title': item.title ,
             'description': item.description ,
@@ -199,7 +201,7 @@ class Gallery3(object):
         try:
             resp = self._openReq(req)
         except G3RequestError , e:
-            return (False , e.message)
+            return (False , str(e))
         return (True , '')
 
     def updateAlbum(self , album):
@@ -283,7 +285,7 @@ class Gallery3(object):
 
     def _isItemValid(self , item , cls):
         if not isinstance(item , cls):
-            raise TypeError('Items to be deleted must be descended from '
+            raise TypeError('Items to be modified must be descended from '
                 '%s: %s' % (cls , type(item)))
         if not 'url' in item.__dict__:
             raise G3UnknownError('The object, %s, has no "url"' % item)
