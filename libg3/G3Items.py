@@ -15,6 +15,7 @@ class BaseRemote(object):
         if weakParent is not None:
             self.parent = weakParent()
         self._gal = weakGalObj()
+        self.fh = None
 
     def __getattr__(self , name):
         """
@@ -133,6 +134,17 @@ class Album(BaseRemote):
         """
         return self._gal.addAlbum(self , albumName , title)
 
+    def setCover(self , image):
+        """
+        Sets the album cover to the RemoteImage
+
+        image(RemoteImage)  : The image to set as the album cover
+        
+        returns(tuple(status , msg))    : Returns a tuple of a boolean status
+                                          and a message if there is an error
+        """
+        return self._gal.setAlbumCover(self , image)
+
     def getAlbums(self):
         """
         Return a list of the sub-albums in this album
@@ -200,6 +212,11 @@ class LocalImage(Image):
     Filename = property(getFilename , setFilename)
 
     def getFileContents(self):
+        """
+        Gets the entire contents of the file
+        
+        returns(str)    : File contents
+        """
         if self.fh is None:
             self.fh = open(self.path , 'rb')
         self.fh.seek(0)
@@ -225,7 +242,19 @@ class LocalImage(Image):
             pass
 
 class RemoteImage(BaseRemote , Image):
-    pass
+    def read(self , length=None):
+        if not self.fh:
+            resp = self._gal.getRespFromUrl(self.file_url)
+            self.fh = resp
+        if length is None:
+            return self.fh.read()
+        return self.fh.read(int(length))
+
+    def close(self):
+        try:
+            self.fh.close()
+        except:
+            pass
 
 class LocalMovie(LocalImage):
     def __init__(self , path , replaceSpaces=True):

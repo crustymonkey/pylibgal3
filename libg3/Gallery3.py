@@ -3,7 +3,7 @@ __all__ = ['Gallery3' , 'login']
 
 from Requests import *
 from Errors import G3RequestError
-from G3Items import getItemFromResp , BaseRemote
+from G3Items import getItemFromResp , BaseRemote , Album , RemoteImage
 from urllib import quote , urlencode
 from uuid import uuid4
 import urllib2 , os , json
@@ -152,6 +152,31 @@ class Gallery3(object):
                                   uploaded
         """
         return self.addImage(parent , movie , title , description , name)
+
+    def setAlbumCover(self , album , image):
+        """
+        Updates a remote item's title and description
+
+        album(Album)                    : The album to set the cover on
+        image(RemoteImage)              : The image to use as the cover
+
+        returns(tuple(status , msg))    : Returns a tuple of a boolean status
+                                          and a message if there is an error
+        """
+        try:
+            self._isItemValid(album , Album)
+            self._isItemValid(album , RemoteImage)
+        except Exception , e:
+            return (False , e.message)
+        data = {
+            'album_cover': image.url ,
+        }
+        req = PutRequest(album.url , self.apiKey , data)
+        try:
+            resp = self._openReq(req)
+        except G3RequestError , e:
+            return (False , e.message)
+        return (True , '')
 
     def updateItem(self , item):
         """
