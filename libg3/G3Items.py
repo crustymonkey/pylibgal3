@@ -3,7 +3,7 @@ __all__ = ['Album' , 'Image' , 'LocalImage' , 'RemoteImage' , 'LocalMovie' ,
     'RemoteMovie' , 'getItemFromResp' , 'getItemsFromResp']
 
 from datetime import datetime
-import json , weakref , types , os , mimetypes
+import json , weakref , types , os , mimetypes , re
 
 class BaseRemote(object):
     _gal = None
@@ -16,6 +16,7 @@ class BaseRemote(object):
             self.parent = weakParent()
         self._gal = weakGalObj()
         self.fh = None
+        self._postInit()
 
     def __getattr__(self , name):
         """
@@ -24,6 +25,9 @@ class BaseRemote(object):
         if name == 'members':
             self.members = self._getMemberObjects()
             return self.members
+        if name == 'tags':
+            self.tags = self._getTags()
+            return self.tags
         urlAttr = '_%s' % name
         attr = getattr(self , urlAttr , None)
         if attr is not None and attr.startswith('http'):
@@ -31,6 +35,13 @@ class BaseRemote(object):
             setattr(self , name , obj)
             return obj
         raise AttributeError(name)
+
+    def _postInit(self):
+        """
+        This can be overridden in subclasses to do any special initialization
+        at the end of the __init__ call
+        """
+        pass
 
     def _setAttrItems(self , d):
         for k , v in d:
@@ -50,21 +61,27 @@ class BaseRemote(object):
         children of this object.  This returns a list of the actual objects.
         """
         memObjs = self._gal.getItemsForUrls(self._members , self)
-        '''
-        memObjs = []
-        for m in self._members:
-            resp = self._gal.getRespFromUrl(m)
-            memObjs.append(getItemFromResp(resp , self._gal , self))
-        '''
         return memObjs
 
-    def _getAlbumCoverObject(self):
+    def _getTags(self):
         """
-        This returns the album cover image
-        """
-        resp = self._gal.getRespFromUrl(self._album_cover)
-        return getItemFromResp(resp , self._gal , self)
+        Returns the list of tag objects
 
+        returns(list[Tag])
+        """
+        # First, I want just the actual tag itself, not the RESTy "tag_item",
+        # so I'm going to modify the urls to save a step
+        ret = []
+        urls = []
+        for url in self.relationships['tags']['members']:
+            m = re.match('^(.*?/tag)_item(/\d+),\d+$' , url)
+            urls.append('%s%s' % tuple(m.groups()))
+        if urls:
+            for url in urls:
+                resp = self._gal.getRespFromUrl(url)
+                ret.append(getItemFromResp(resp , self._gal , self))
+        return ret
+        
     def _getUrlObject(self , url):
         """
         This returns the album cover image
@@ -289,6 +306,14 @@ class LocalMovie(LocalImage):
 class RemoteMovie(RemoteImage):
     pass
 
+class Tag(BaseRemote):
+    """
+    A simple class to represent a tag
+    """
+    def _postInit(self):
+        self.count = int(self.count)
+        self.type = 'tag'
+
 def getItemFromResp(response , galObj , parent=None):
     """
     Returns the appropriate item given the "addinfourl" response object from
@@ -309,6 +334,9 @@ def getItemFromResp(response , galObj , parent=None):
         respObj = response
     else:
         respObj = json.loads(response.read())
+    if 'count' in respObj['entity']:
+        # This is a tag.  It doesn't have the same items as regular objects
+        return Tag(respObj , galObj , parent)
     try:
         t = respObj['entity']['type']
     except:
