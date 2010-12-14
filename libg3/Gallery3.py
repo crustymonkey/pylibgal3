@@ -3,7 +3,8 @@ __all__ = ['Gallery3' , 'login']
 
 from Requests import *
 from Errors import G3RequestError
-from G3Items import getItemFromResp , BaseRemote , Album , RemoteImage
+from G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , \
+    RemoteImage
 from urllib import quote , urlencode
 from uuid import uuid4
 import urllib2 , os , json
@@ -45,6 +46,21 @@ class Gallery3(object):
             self.root = getItemFromResp(resp , self)
         return self.root
 
+    def getItemsForUrls(self , urls , parent=None):
+        """
+        This retrieves an item for each url specified in the urls list
+
+        urls(list[str])     : The list of urls to retrieve
+
+        returns(list[BaseRemote])   : Returns a list of the corresponding 
+                                      remote objects
+        """
+        data = {
+            'urls': json.dumps(urls) ,
+        }
+        resp = self.getRespFromUri('index.php/rest/items' , data)
+        return getItemsFromResp(resp , self , parent)
+        
     def getRespFromUrl(self , url):
         """
         This returns the response object given a full url rather than just a
@@ -56,14 +72,14 @@ class Gallery3(object):
         resp = self._openReq(req)
         return resp
 
-    def getRespFromUri(self , uri):
+    def getRespFromUri(self , uri , kwargs={}):
         """
         Performs the request for the given uri and returns the "addinfourl" 
         response
 
         uri(str) : The uri string defining the resource on the defined host
         """
-        url = self._buildUrl(uri)
+        url = self._buildUrl(uri , kwargs)
         return self.getRespFromUrl(url)
 
     def addAlbum(self , parent , albumName , title , description=''):
@@ -281,9 +297,11 @@ class Gallery3(object):
         if self.ssl:
             self._opener.add_handler(urllib2.HTTPSHandler())
 
-    def _buildUrl(self , resource):
+    def _buildUrl(self , resource , kwargs={}):
         url = '%s://%s:%d/%s/%s' % (self.protocol , self.host , self.port , 
             quote(self.g3Base) , quote(resource))
+        if kwargs:
+            url += '?%s' % urlencode(kwargs)
         return url
 
     def _getUrlFromResp(self , resp):

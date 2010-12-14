@@ -46,10 +46,13 @@ class BaseRemote(object):
         The default "members" attribute only contains the URLs for the 
         children of this object.  This returns a list of the actual objects.
         """
+        memObjs = self._gal.getItemsForUrls(self._members , self)
+        '''
         memObjs = []
         for m in self._members:
             resp = self._gal.getRespFromUrl(m)
             memObjs.append(getItemFromResp(resp , self._gal , self))
+        '''
         return memObjs
 
     def _getAlbumCoverObject(self):
@@ -269,14 +272,21 @@ def getItemFromResp(response , galObj , parent=None):
     Returns the appropriate item given the "addinfourl" response object from
     the urllib2 request
 
-    response(addinfourl) : The response object from the urllib2 request
-    galObj(Gallery3)     : The gallery object this is associated with
-    parent(Album)        : The parent object for this item 
+    response(addinfourl|dict)   : The response object from the urllib2 request 
+                                  or a dict that has already been converted
+                                  (usually when called from getItemsFromResp)
+    galObj(Gallery3)            : The gallery object this is associated with
+    parent(Album)               : The parent object for this item 
+
+    returns(BaseRemote)         : Returns an implemenation of BaseRemote
     """
     galObj = weakref.ref(galObj)
     if parent is not None:
         parent = weakref.ref(parent)
-    respObj = json.loads(response.read())
+    if isinstance(response , dict):
+        respObj = response
+    else:
+        respObj = json.loads(response.read())
     try:
         t = respObj['entity']['type']
     except:
@@ -290,3 +300,24 @@ def getItemFromResp(response , galObj , parent=None):
         return RemoteMovie(respObj , galObj , parent)
     else:
         raise G3UnknownTypeError('Unknown entity type: %s' % t)
+
+def getItemsFromResp(response , galObj , parent=None):
+    """
+    This takes the raw response with a list of items and returns a list of
+    the corresponding objects
+
+    response(addinfourl|dict)   : The response object from the urllib2 request 
+                                  or a dict that has already been converted
+                                  (usually when called from getItemsFromResp)
+    galObj(Gallery3)            : The gallery object this is associated with
+    parent(Album)               : The parent object for this item 
+
+    returns(list[BaseRemote])   : Returns a list of BaseRemote objects
+    """
+    ret = []
+    lResp = json.loads(response.read())
+    if not isinstance(lResp , list):
+        lResp = list(lResp)
+    for resp in lResp:
+        ret.append(getItemFromResp(resp , galObj , parent))
+    return ret
