@@ -77,6 +77,9 @@ class Gallery3(object):
 
         returns(Album)      : The Album object that was created
         """
+        if not parent.can_edit:
+            raise G3AuthError('You do not have permission to edit: %s' % 
+                parent.title)
         data = {
             'type': 'album' ,
             'name': albumName ,
@@ -105,6 +108,9 @@ class Gallery3(object):
         returns(RemoteImage)    : The RemoteImage instance for the item
                                   uploaded
         """
+        if not parent.can_edit:
+            raise G3AuthError('You do not have permission to edit: %s' % 
+                parent.title)
         if name:
             image.Filename = name
         entity = {
@@ -163,6 +169,9 @@ class Gallery3(object):
         returns(tuple(status , msg))    : Returns a tuple of a boolean status
                                           and a message if there is an error
         """
+        if not album.can_edit:
+            raise G3AuthError('You do not have permission to edit: %s' % 
+                album.title)
         try:
             self._isItemValid(album , Album)
             self._isItemValid(image , RemoteImage)
@@ -189,6 +198,9 @@ class Gallery3(object):
         returns(tuple(status , msg))    : Returns a tuple of a boolean status
                                           and a message if there is an error
         """
+        if not item.can_edit:
+            raise G3AuthError('You do not have permission to edit: %s' % 
+                item.title)
         try:
             self._isItemValid(item , BaseRemote)
         except Exception , e:
@@ -249,6 +261,9 @@ class Gallery3(object):
         returns(tuple(status , msg))    : Returns a tuple of a boolean status
                                           and a message if there is an error
         """
+        if not item.can_edit:
+            raise G3AuthError('You do not have permission to edit: %s' % 
+                item.title)
         try:
             self._isItemValid(item , BaseRemote)
         except Exception , e:
