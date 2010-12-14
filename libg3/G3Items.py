@@ -28,6 +28,9 @@ class BaseRemote(object):
         if name == 'tags':
             self.tags = self._getTags()
             return self.tags
+        if name == 'comments':
+            self.comments = self._getComments()
+            return self.comments
         urlAttr = '_%s' % name
         attr = getattr(self , urlAttr , None)
         if attr is not None and attr.startswith('http'):
@@ -80,6 +83,24 @@ class BaseRemote(object):
             for url in urls:
                 resp = self._gal.getRespFromUrl(url)
                 ret.append(getItemFromResp(resp , self._gal , self))
+        return ret
+
+    def _getComments(self):
+        """
+        Returns a list of the Comment items for this item
+        
+        returns(list[Comment])  : Returns a list of Comment objects
+        """
+        ret = []
+        # I can't use the shortcut I did for tags so I need to get the list
+        # of comments in the first call and then create the objects with
+        # the calls thereafter
+        commListUrl = self.relationships['comments']['url']
+        resp = self._gal.getRespFromUrl(commListUrl)
+        tmpObj = json.loads(resp.read())
+        for url in tmpObj['members']:
+            resp = self._gal.getRespFromUrl(url)
+            ret.append(getItemFromResp(resp , self._gal , self))
         return ret
         
     def _getUrlObject(self , url):
@@ -314,6 +335,17 @@ class Tag(BaseRemote):
         self.count = int(self.count)
         self.type = 'tag'
 
+class Comment(BaseRemote):
+    """
+    A class to represent a comment
+    """
+    def _postInit(self):
+        # Change the "item" attribute to "parent" since that's what it is
+        # I'm doing this to address overall consistency
+        self._parent = None
+        if hasattr(self , '_item'):
+            self._parent = getattr(self , '_item')
+
 def getItemFromResp(response , galObj , parent=None):
     """
     Returns the appropriate item given the "addinfourl" response object from
@@ -337,6 +369,10 @@ def getItemFromResp(response , galObj , parent=None):
     if 'count' in respObj['entity']:
         # This is a tag.  It doesn't have the same items as regular objects
         return Tag(respObj , galObj , parent)
+    if 'text' in respObj['entity']:
+        # This is a comment.  It also does not have the same items as
+        # regular objects
+        return Comment(respObj , galObj , parent)
     try:
         t = respObj['entity']['type']
     except:
