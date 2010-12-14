@@ -45,6 +45,27 @@ class Gallery3(object):
             resp = self.getRespFromUri(self._rootUri)
             self.root = getItemFromResp(resp , self)
         return self.root
+    
+    def getRandomImage(self , album , direct=True):
+        """
+        Returns a random RemoteImage object for the album.  If "direct" is
+        False, a random image can be pulled from nested albums.
+
+        album(Album)        : The album object to pull the random image from
+        direct(bool)        : If set to False, the image may be pulled from
+                              a sub-album
+
+        returns(RemoteImage)    : Returns a RemoteImage instance
+        """
+        scope = ('all' , 'direct')[direct]
+        data = {
+            'type': 'photo' ,
+            'random': 'true' ,
+            'scope': scope ,
+        }
+        url = '%s?%s' % (album.url , urlencode(data))
+        resp = self.getRespFromUrl(url)
+        return getItemFromResp(resp , self)
 
     def getItemsForUrls(self , urls , parent=None):
         """

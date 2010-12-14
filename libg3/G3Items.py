@@ -185,6 +185,18 @@ class Album(BaseRemote):
         return self._getByType('movie')
     Movies = property(getMovies)
 
+    def getRandomImage(self , direct=True):
+        """
+        Returns a random RemoteImage object for the album.  If "direct" is
+        False, a random image can be pulled from nested albums.
+
+        direct(bool)        : If set to False, the image may be pulled from
+                              a sub-album
+
+        returns(RemoteImage)    : Returns a RemoteImage instance
+        """
+        return self._gal.getRandomImage(self , direct)
+
     def _getByType(self , t):
         ret = []
         for m in self.members:
