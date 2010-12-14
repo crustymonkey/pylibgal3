@@ -1,6 +1,6 @@
 
 __all__ = ['Album' , 'Image' , 'LocalImage' , 'RemoteImage' , 'LocalMovie' , 
-    'RemoteMovie' , 'getItemFromResp']
+    'RemoteMovie' , 'getItemFromResp' , 'getItemsFromResp']
 
 from datetime import datetime
 import json , weakref , types , os , mimetypes
@@ -24,9 +24,12 @@ class BaseRemote(object):
         if name == 'members':
             self.members = self._getMemberObjects()
             return self.members
-        if name == 'album_cover':
-            self.album_cover = self._getAlbumCoverObject()
-            return self.album_cover
+        urlAttr = '_%s' % name
+        attr = getattr(self , urlAttr , None)
+        if attr is not None and attr.startswith('http'):
+            obj = self._getUrlObject(attr)
+            setattr(self , name , obj)
+            return obj
         raise AttributeError(name)
 
     def _setAttrItems(self , d):
@@ -60,6 +63,13 @@ class BaseRemote(object):
         This returns the album cover image
         """
         resp = self._gal.getRespFromUrl(self._album_cover)
+        return getItemFromResp(resp , self._gal , self)
+
+    def _getUrlObject(self , url):
+        """
+        This returns the album cover image
+        """
+        resp = self._gal.getRespFromUrl(url)
         return getItemFromResp(resp , self._gal , self)
 
     def getCrDT(self):
