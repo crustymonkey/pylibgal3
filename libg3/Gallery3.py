@@ -2,7 +2,7 @@
 __all__ = ['Gallery3' , 'login']
 
 from Requests import *
-from Errors import G3RequestError
+from Errors import G3RequestError , G3UnknownError
 from G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , \
     RemoteImage
 from urllib import quote , urlencode
@@ -312,6 +312,25 @@ class Gallery3(object):
             return (False , e.message)
         return (True , '')
 
+    def tagItem(self , item , tagName):
+        """
+        Tag this item with the string "tagName"
+
+        tagName(str)        : The actual tag name
+
+        returns(Tag)        : The tag that was created
+        """
+        data = {
+            'tag': str(tagName) ,
+            'item': item.url ,
+        }
+        url = self._buildUrl('index.php/rest/tag_item/')
+        print url
+        req = PostRequest(url , self.apiKey , data)
+        resp = self._openReq(req)
+        print resp.read()
+        sys.exit()
+
     def _buildOpener(self):
         cp = urllib2.HTTPCookieProcessor()
         self._opener = urllib2.build_opener(cp)
@@ -333,8 +352,11 @@ class Gallery3(object):
         try:
             resp = self._opener.open(req)
         except urllib2.HTTPError , e:
-            errors = json.loads(e.read())['errors']
-            raise G3RequestError(errors)
+            err = json.loads(e.read())
+            if isinstance(err , dict) and 'errors' in err:
+                raise G3RequestError(err['errors'])
+            else:
+                raise G3UnknownError('Unknown request error: %s' % e)
         return resp
 
     def _isItemValid(self , item , cls):

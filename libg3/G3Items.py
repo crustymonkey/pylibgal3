@@ -6,8 +6,6 @@ from datetime import datetime
 import json , weakref , types , os , mimetypes , re
 
 class BaseRemote(object):
-    _gal = None
-
     def __init__(self , respObj , weakGalObj , weakParent=None):
         self._setAttrItems(respObj.items())
         if 'entity' in respObj:
@@ -158,6 +156,16 @@ class BaseRemote(object):
         if description is not None:
             self.description = description
         return self._gal.updateItem(self)
+
+    def tag(self , tagName):
+        """
+        Tag this item with the string "tagName"
+
+        tagName(str)        : The actual tag name
+
+        returns(Tag)        : The tag that was created
+        """
+        return self._gal.tagItem(self , tagName)
 
 class Album(BaseRemote):
     def addImage(self , image , title='' , description='' , name=''):
@@ -343,6 +351,9 @@ class Tag(BaseRemote):
         self.count = int(self.count)
         self.type = 'tag'
 
+    def tag(self , tagName):
+        raise G3Error('You cannot tag a tag')
+
 class Comment(BaseRemote):
     """
     A class to represent a comment
@@ -353,6 +364,9 @@ class Comment(BaseRemote):
         self._parent = None
         if hasattr(self , '_item'):
             self._parent = getattr(self , '_item')
+
+    def tag(self , tagName):
+        raise G3Error('You cannot tag a comment')
 
 def getItemFromResp(response , galObj , parent=None):
     """
