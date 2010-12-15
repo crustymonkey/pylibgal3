@@ -12,9 +12,10 @@ class BaseRemote(object):
         self._setAttrItems(respObj.items())
         if 'entity' in respObj:
             self._setAttrItems(respObj['entity'].items())
+        self._weakParent = None
         if weakParent is not None:
-            self.parent = weakParent()
-        self._gal = weakGalObj()
+            self._weakParent = weakParent
+        self._weakGal = weakGalObj
         self.fh = None
         self._postInit()
 
@@ -22,6 +23,7 @@ class BaseRemote(object):
         """
         A bit of magic to make the retrieval of member objects lazy
         """
+        # Process the specials
         if name == 'members':
             self.members = self._getMemberObjects()
             return self.members
@@ -31,6 +33,12 @@ class BaseRemote(object):
         if name == 'comments':
             self.comments = self._getComments()
             return self.comments
+        # Process the weak reference calls
+        if name == '_gal':
+            return self._weakGal()
+        if name == 'parent' and self._weakParent is not None:
+            return self._weakParent()
+        # Process the generic items
         urlAttr = '_%s' % name
         attr = getattr(self , urlAttr , None)
         if attr is not None and attr.startswith('http'):
