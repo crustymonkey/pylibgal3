@@ -324,7 +324,7 @@ class Gallery3(object):
             'tag': str(tagName) ,
             'item': item.url ,
         }
-        url = self._buildUrl('index.php/rest/tag_item/')
+        url = self._buildUrl('index.php/rest/item_tags/%s' % item.id)
         print url
         req = PostRequest(url , self.apiKey , data)
         resp = self._openReq(req)
