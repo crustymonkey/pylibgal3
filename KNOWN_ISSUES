@@ -1,6 +1,10 @@
 =========
 pylibgal3
 =========
+*   Need to implement member sorting
+*   Need to implement thumbnail access and manipulation
+*   Need to implement image resizing
+*   The getRandomImage() does not currently work
 
 =========
 Gallery 3

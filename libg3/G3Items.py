@@ -1,3 +1,19 @@
+#
+#    This file is part of pylibgal3.
+#
+#    pylibgal3 is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    pylibgal3 is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with pylibgal3.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 __all__ = ['Album' , 'Image' , 'LocalImage' , 'RemoteImage' , 'LocalMovie' , 
     'RemoteMovie' , 'getItemFromResp' , 'getItemsFromResp']
@@ -191,16 +207,17 @@ class Album(BaseRemote):
         """
         return self._gal.addMovie(self , movie , title , description , name)
 
-    def addAlbum(self , albumName , title):
+    def addAlbum(self , albumName , title , description=''):
         """
         Add a subalbum to this album
 
         albumName(str)  : The name of the new album
         title(str)      : The album title
+        description(str): The album description
 
         returns(Album)  : The Album object that was created
         """
-        return self._gal.addAlbum(self , albumName , title)
+        return self._gal.addAlbum(self , albumName , title , description)
 
     def setCover(self , image):
         """
@@ -358,6 +375,9 @@ class Tag(BaseRemote):
     """
     A simple class to represent a tag
     """
+    def __str__(self):
+        return self.name
+
     def _postInit(self):
         if hasattr(self , 'count'):
             self.count = int(self.count)
@@ -370,6 +390,9 @@ class Comment(BaseRemote):
     """
     A class to represent a comment
     """
+    def __str__(self):
+        return self.text
+
     def _postInit(self):
         # Change the "item" attribute to "parent" since that's what it is
         # I'm doing this to address overall consistency
