@@ -4,7 +4,7 @@ __all__ = ['Gallery3' , 'login']
 from Requests import *
 from Errors import G3RequestError , G3UnknownError
 from G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , \
-    RemoteImage
+    RemoteImage , Tag
 from urllib import quote , urlencode
 from uuid import uuid4
 import urllib2 , os , json
@@ -320,16 +320,29 @@ class Gallery3(object):
 
         returns(Tag)        : The tag that was created
         """
+        # First we have to create the tag itself, if necessary
         data = {
-            'tag': str(tagName) ,
+            'name': str(tagName) ,
+            #'item': item.url ,
+        }
+        url = self._buildUrl('index.php/rest/tags')
+        req = PostRequest(url , self.apiKey , data)
+        resp = self._openReq(req)
+        r = json.loads(resp.read())
+        tagUrl = r['url']
+        data = {
+            'tag': tagUrl ,
             'item': item.url ,
         }
         url = self._buildUrl('index.php/rest/item_tags/%s' % item.id)
-        print url
         req = PostRequest(url , self.apiKey , data)
         resp = self._openReq(req)
-        print resp.read()
-        sys.exit()
+        respObj = json.loads(resp.read())
+        item.relationships['tags']['members'].append(respObj['url'])
+        tag = Tag(respObj , self , item)
+        if hasattr(item , 'tags'):
+            item.tags.append(tag)
+        return tag
 
     def _buildOpener(self):
         cp = urllib2.HTTPCookieProcessor()

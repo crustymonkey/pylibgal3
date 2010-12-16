@@ -38,7 +38,8 @@ class BaseRemote(object):
             return self._weakParent()
         # Process the generic items
         urlAttr = '_%s' % name
-        attr = getattr(self , urlAttr , None)
+        # Call __getattribute__ to prevent loops
+        attr = object.__getattribute__(self , urlAttr)
         if attr is not None and attr.startswith('http'):
             obj = self._getUrlObject(attr)
             setattr(self , name , obj)
@@ -348,7 +349,8 @@ class Tag(BaseRemote):
     A simple class to represent a tag
     """
     def _postInit(self):
-        self.count = int(self.count)
+        if hasattr(self , 'count'):
+            self.count = int(self.count)
         self.type = 'tag'
 
     def tag(self , tagName):
