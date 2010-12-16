@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 #
+#    Author: Jay Deiman
+#    Email: admin@splitstreams.com
+# 
 #    This file is part of pylibgal3.
 #
 #    pylibgal3 is free software: you can redistribute it and/or modify
