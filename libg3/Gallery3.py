@@ -323,13 +323,14 @@ class Gallery3(object):
         # First we have to create the tag itself, if necessary
         data = {
             'name': str(tagName) ,
-            #'item': item.url ,
         }
         url = self._buildUrl('index.php/rest/tags')
         req = PostRequest(url , self.apiKey , data)
         resp = self._openReq(req)
         r = json.loads(resp.read())
         tagUrl = r['url']
+        # And now that we have our (possibly) newly created tag, we can
+        # use that to tag our item
         data = {
             'tag': tagUrl ,
             'item': item.url ,
@@ -343,6 +344,28 @@ class Gallery3(object):
         if hasattr(item , 'tags'):
             item.tags.append(tag)
         return tag
+
+    def addComment(self , image , comment):
+        """
+        Comment on this item with the string "comment"
+
+        comment(str)        : The comment
+
+        returns(Comment)        : The comment that was created
+        """
+        data = {
+            'item': image.url ,
+            'text': comment ,
+        }
+        url = self._buildUrl('index.php/rest/comments')
+        req = PostRequest(url , self.apiKey , data)
+        resp = self._openReq(req)
+        commUrl = json.loads(resp.read())['url']
+        resp = self.getRespFromUrl(commUrl)
+        comm = getItemFromResp(resp , self , image)
+        if hasattr(image , 'comments'):
+            image.comments.append(comm)
+        return comm
 
     def _buildOpener(self):
         cp = urllib2.HTTPCookieProcessor()

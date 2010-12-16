@@ -322,6 +322,16 @@ class LocalImage(Image):
             pass
 
 class RemoteImage(BaseRemote , Image):
+    def addComment(self , comment):
+        """
+        Comment on this item with the string "comment"
+
+        comment(str)        : The comment
+
+        returns(Comment)        : The comment that was created
+        """
+        return self._gal.addComment(self , comment)
+
     def read(self , length=None):
         if not self.fh:
             resp = self._gal.getRespFromUrl(self.file_url)
