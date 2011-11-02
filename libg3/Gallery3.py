@@ -129,7 +129,6 @@ class Gallery3(object):
         uri(str) : The uri string defining the resource on the defined host
         """
         url = self._buildUrl(uri , kwargs)
-        print url
         return self.getRespFromUrl(url)
 
     def addAlbum(self , parent , albumName , title , description=''):
