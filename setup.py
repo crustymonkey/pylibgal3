@@ -22,11 +22,10 @@
 
 
 from distutils.core import setup
-from libg3 import __version__ as version
 import sys
 
 setup(name='pylibgal3' ,
-    version=version ,
+    version='0.1.5' ,
     author='Jay Deiman' ,
     author_email='admin@splitstreams.com' ,
     url='http://stuffivelearned.org' ,
