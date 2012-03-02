@@ -22,7 +22,6 @@
 
 
 from distutils.core import setup
-import sys
 
 setup(name='pylibgal3' ,
     version='0.1.5' ,
