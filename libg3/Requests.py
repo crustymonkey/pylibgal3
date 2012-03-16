@@ -21,8 +21,8 @@
 __all__ = ['BaseRequest' , 'GetRequest' , 'PostRequest' , 'PutRequest' , 
     'DeleteRequest']
 
-from urllib2 import Request
-from urllib import quote
+from urllib.request import Request
+from urllib.parse import quote
 import os , json , types
 
 class BaseRequest(Request):
@@ -34,7 +34,7 @@ class BaseRequest(Request):
             if isinstance(data , dict):
                 data = 'entity=%s' % quote(json.dumps(data , 
                     separators=(',' , ':')))
-            elif type(data) not in types.StringTypes:
+            elif type(data) not in str:
                 raise TypeError('Invalid type for data.  It should be '
                     'a "dict" or "str", not %s' % type(data))
             headers['Content-Length'] = str(len(data))

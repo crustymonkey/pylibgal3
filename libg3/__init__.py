@@ -18,7 +18,7 @@
 #    along with pylibgal3.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from G3Items import *
-from Gallery3 import *
+from .G3Items import *
+from .Gallery3 import *
 
 __version__ = '0.1.5'

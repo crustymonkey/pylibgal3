@@ -20,19 +20,19 @@
 
 __all__ = ['Gallery3' , 'login']
 
-from Requests import *
-from Errors import G3RequestError , G3UnknownError
-from G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , \
+from .Requests import *
+from .Errors import G3RequestError , G3UnknownError
+from .G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , \
     RemoteImage , Tag
-from urllib import quote , urlencode
+from urllib.parse import quote, urlencode
 from uuid import uuid4
-import urllib2 , os
+import urllib.request, urllib.error, urllib.parse , os
 try:
     import json
 except:
     try:
         import simplejson
-    except ImportError , e:
+    except ImportError as e:
         raise ImportError('You must have either the "json" or "simplejson"'
             'library installed!')
 
@@ -248,7 +248,7 @@ class Gallery3(object):
         try:
             self._isItemValid(album , Album)
             self._isItemValid(image , RemoteImage)
-        except Exception , e:
+        except Exception as e:
             return (False , str(e))
         data = {
             'album_cover': image.url ,
@@ -256,7 +256,7 @@ class Gallery3(object):
         req = PutRequest(album.url , self.apiKey , data)
         try:
             resp = self._openReq(req)
-        except G3RequestError , e:
+        except G3RequestError as e:
             return (False , str(e))
         album.album_cover = image
         album._album_cover = image.url
@@ -276,7 +276,7 @@ class Gallery3(object):
                 item.title)
         try:
             self._isItemValid(item , BaseRemote)
-        except Exception , e:
+        except Exception as e:
             return (False , str(e))
         data = {
             'title': item.title ,
@@ -285,7 +285,7 @@ class Gallery3(object):
         req = PutRequest(item.url , self.apiKey , data)
         try:
             resp = self._openReq(req)
-        except G3RequestError , e:
+        except G3RequestError as e:
             return (False , str(e))
         return (True , '')
 
@@ -339,12 +339,12 @@ class Gallery3(object):
                 item.title)
         try:
             self._isItemValid(item , BaseRemote)
-        except Exception , e:
+        except Exception as e:
             return (False , e.message)
         req = DeleteRequest(item.url , self.apiKey)
         try:
             resp = self._openReq(req)
-        except G3RequestError , e:
+        except G3RequestError as e:
             return (False , e.message)
         return (True , '')
 
@@ -404,10 +404,10 @@ class Gallery3(object):
         return comm
 
     def _buildOpener(self):
-        cp = urllib2.HTTPCookieProcessor()
-        self._opener = urllib2.build_opener(cp)
+        cp = urllib.request.HTTPCookieProcessor()
+        self._opener = urllib.request.build_opener(cp)
         if self.ssl:
-            self._opener.add_handler(urllib2.HTTPSHandler())
+            self._opener.add_handler(urllib.request.HTTPSHandler())
 
     def _buildUrl(self , resource , kwargs={}):
         url = '%s://%s:%d/%s/%s' % (self.protocol , self.host , self.port , 
@@ -423,7 +423,7 @@ class Gallery3(object):
     def _openReq(self , req):
         try:
             resp = self._opener.open(req)
-        except urllib2.HTTPError , e:
+        except urllib.error.HTTPError as e:
             err = json.loads(e.read())
             if isinstance(err , dict) and 'errors' in err:
                 raise G3RequestError(err['errors'])
@@ -460,12 +460,12 @@ def login(host , username , passwd , g3Base='/gallery3' , port=80 ,
     url = '%s://%s:%d/%s/index.php/rest' % (protocol , host , port , 
         quote(g3Base))
     req = PostRequest(url , None , urlencode(data))
-    opener = urllib2.build_opener()
+    opener = urllib.request.build_opener()
     if ssl:
-        opener.add_handler(urllib2.HTTPSHandler())
+        opener.add_handler(urllib.request.HTTPSHandler())
     try:
         resp = opener.open(req)
-    except urllib2.HTTPError , e:
+    except urllib.error.HTTPError as e:
         return None
     apiKey = resp.read().strip('\'"')
     return Gallery3(host , apiKey , g3Base , port , ssl)

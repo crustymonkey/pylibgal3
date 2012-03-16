@@ -28,16 +28,16 @@ try:
 except:
     try:
         import simplejson
-    except ImportError , e:
+    except ImportError as e:
         raise ImportError('You must have either the "json" or "simplejson"'
             'library installed!')
 
 
 class BaseRemote(object):
     def __init__(self , respObj , weakGalObj , weakParent=None):
-        self._setAttrItems(respObj.items())
+        self._setAttrItems(list(respObj.items()))
         if 'entity' in respObj:
-            self._setAttrItems(respObj['entity'].items())
+            self._setAttrItems(list(respObj['entity'].items()))
         self._weakParent = None
         if weakParent is not None:
             self._weakParent = weakParent
@@ -93,7 +93,7 @@ class BaseRemote(object):
             if k == 'entity':
                 # Skip it
                 continue
-            if (type(v) in types.StringTypes and v.startswith('http') and 
+            if (type(v) in str and v.startswith('http') and 
                     'url' not in k) or k == 'members':
                 setattr(self , '_%s' % k , v)
             else:

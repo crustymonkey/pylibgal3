@@ -31,7 +31,7 @@ class G3RequestError(G3Error):
 
     def _getMessage(self):
         ret = ''
-        for e in self.errors.items():
+        for e in list(self.errors.items()):
             ret += '%s: %r\n' % e
         return ret
 
