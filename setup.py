@@ -24,7 +24,7 @@
 from distutils.core import setup
 
 setup(name='pylibgal3' ,
-    version='0.1.5' ,
+    version='0.1.6' ,
     author='Jay Deiman' ,
     author_email='admin@splitstreams.com' ,
     url='http://stuffivelearned.org' ,
