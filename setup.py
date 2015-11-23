@@ -23,8 +23,10 @@
 
 from distutils.core import setup
 
+from libg3 import __version__ as version
+
 setup(name='pylibgal3' ,
-    version='0.1.6' ,
+    version=version,
     author='Jay Deiman' ,
     author_email='admin@splitstreams.com' ,
     url='http://stuffivelearned.org' ,

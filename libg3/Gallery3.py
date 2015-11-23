@@ -92,7 +92,12 @@ class Gallery3(object):
         }
         url = '%s?%s' % (album.url , urlencode(data))
         resp = self.getRespFromUrl(url)
-        return getItemFromResp(resp , self)
+        # We get an album item back with a single member image
+        images = getItemFromResp(resp , self).Images
+        if not images:
+            return None
+        
+        return images[0]
 
     def getItemsForUrls(self , urls , parent=None):
         """
